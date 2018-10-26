@@ -1,0 +1,15 @@
+- hosts: root_ca_nodes
+  become: yes
+  environment:
+    PATH: /usr/local/bin:{{ ansible_env.PATH }}
+  roles:
+  - jumperfly.root_ca
+- hosts: intermediate_ca_nodes
+  become: yes
+  environment:
+    PATH: /usr/local/bin:{{ ansible_env.PATH }}
+  roles:
+  - role: jumperfly.intermediate_ca
+    intermediate_ca_common_name: int1
+  - role: jumperfly.intermediate_ca
+    intermediate_ca_common_name: int2

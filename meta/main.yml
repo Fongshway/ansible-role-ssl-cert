@@ -1,0 +1,13 @@
+dependencies:
+  - jumperfly.cfssl
+
+galaxy_info:
+  role_name: intermediate_ca
+  author: jumperfly
+  description: ansible-role-intermediate-ca
+  license: Apache
+  min_ansible_version: "2.0"
+  platforms:
+    - name: EL
+      versions:
+        - "7"

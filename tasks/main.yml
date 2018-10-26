@@ -1,0 +1,32 @@
+- name: Ensure base directory exists
+  file: path={{ intermediate_ca_base_dir }} state=directory
+- name: Check if intermediate CA cert exists
+  stat: path={{ intermediate_ca_base_dir }}/{{ intermediate_ca_common_name }}-ca.pem
+  register: stat_result
+- name: Create and sign intermediate certificate
+  when: not stat_result.stat.exists
+  block:
+    - name: Create intermediate CA csr
+      template: src=intermediate-ca-csr.json dest={{ intermediate_ca_base_dir }}/{{ intermediate_ca_common_name }}-ca-csr.json
+    - name: Save intermediate CA key
+      shell: cfssl genkey {{ intermediate_ca_common_name }}-ca-csr.json | cfssljson -bare {{ intermediate_ca_common_name }}-ca
+      args:
+        chdir: "{{ intermediate_ca_base_dir }}"
+    - name: Read intermediate CSR
+      slurp: src="{{ intermediate_ca_base_dir }}/{{ intermediate_ca_common_name}}-ca.csr"
+      register: read_csr_result
+    - name: Save intermediate CSR on root CA host
+      copy:
+        content: "{{ read_csr_result.content | b64decode }}"
+        dest: "{{ root_ca_base_dir}}/{{ intermediate_ca_common_name}}-ca.csr"
+      delegate_to: "{{ intermediate_ca_root_delegate }}"
+    - name: Sign intermediate CA cert with root CA cert
+      shell: cfssl sign -config /etc/cfssl/config.json -profile intermediate -ca ca.pem -ca-key ca-key.pem {{ intermediate_ca_common_name }}-ca.csr | cfssljson -bare -stdout {{ intermediate_ca_common_name }}-ca
+      args:
+        chdir: "{{ root_ca_base_dir }}"
+      delegate_to: "{{ intermediate_ca_root_delegate }}"
+      register: sign_result
+    - name: Save the signed cert
+      copy:
+        content: "{{ sign_result.stdout }}"
+        dest: "{{ intermediate_ca_base_dir }}/{{ intermediate_ca_common_name}}-ca.pem"

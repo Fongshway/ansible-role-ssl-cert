@@ -1,0 +1,9 @@
+intermediate_ca_root_delegate: "{{ groups['root_ca_nodes'][0] }}"
+intermediate_ca_base_dir: /etc/pki/ansible-intermediate-ca
+intermediate_ca_common_name: intermediate
+intermediate_ca_country: GB
+intermediate_ca_city: London
+intermediate_ca_state: Greater London
+intermediate_ca_organization_name: Ansible Certificate Authority
+intermediate_ca_organizational_unit_name: CA
+root_ca_base_dir: /etc/pki/ansible-root-ca
