@@ -1,9 +1,25 @@
-intermediate_ca_root_delegate: "{{ groups['root_ca_nodes'][0] }}"
-intermediate_ca_base_dir: /etc/pki/ansible-intermediate-ca
-intermediate_ca_common_name: intermediate
-intermediate_ca_country: GB
-intermediate_ca_city: London
-intermediate_ca_state: Greater London
-intermediate_ca_organization_name: Ansible Certificate Authority
-intermediate_ca_organizational_unit_name: CA
-root_ca_base_dir: /etc/pki/ansible-root-ca
+# Defines the cfssl profile to use: one of server,client,peer,intermediate
+ssl_cert_type: server
+
+# Common name to use for the generated certificate
+ssl_cert_common_name: ansible
+
+# Location to store keys, csrs, certificates
+ssl_cert_base_dir: /etc/pki/{{ 'ansible-ca' if ssl_cert_type == 'intermediate' else 'ansible-ssl-certs' }}
+
+# Information to store in the certificate
+ssl_cert_country: GB
+ssl_cert_city: London
+ssl_cert_state: Greater London
+ssl_cert_organization_name: Ansible Certificate
+ssl_cert_organizational_unit_name: Certificate
+
+# The delegate host holding the CA key to sign the certificate
+ssl_cert_ca_delegate: "{{ groups['root_ca_nodes' if ssl_cert_type == 'intermediate' else 'intermediate_ca_nodes'][0] }}"
+
+# The base directory on the delegate host containing signing key, certificate
+ssl_cert_ca_delegate_base_dir: /etc/pki/ansible-ca
+
+# Location of the signing key and certificate on the delegate host
+ssl_cert_ca_delegate_key: "{{ 'ca-key.pem' if ssl_cert_type == 'intermediate' else 'intermediate-key.pem' }}"
+ssl_cert_ca_delegate_cert: "{{ 'ca.pem' if ssl_cert_type == 'intermediate' else 'intermediate.pem' }}"

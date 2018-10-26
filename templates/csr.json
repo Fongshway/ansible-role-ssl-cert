@@ -1,0 +1,16 @@
+{
+  "CN": "{{ ssl_cert_common_name }}",
+  "key": {
+    "algo": "rsa",
+    "size": 2048
+  },
+  "names": [
+    {
+      "C": "{{ ssl_cert_country }}",
+      "L": "{{ ssl_cert_city }}",
+      "O": "{{ ssl_cert_organization_name }}",
+      "OU": "{{ ssl_cert_organizational_unit_name }}",
+      "ST": "{{ ssl_cert_state }}"
+    }
+  ]
+}

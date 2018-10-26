@@ -34,7 +34,7 @@ Vagrant.configure("2") do |config|
       if i == 2
         config.vm.provision "shell", inline: <<-SHELL
           mkdir -p /etc/ansible/roles
-          ln -snf /vagrant/ /etc/ansible/roles/jumperfly.intermediate_ca
+          ln -snf /vagrant/ /etc/ansible/roles/jumperfly.ssl_cert
           ansible-galaxy install --ignore-errors -r /vagrant/tests/requirements.yml -p /etc/ansible/roles
         SHELL
 
@@ -44,7 +44,8 @@ Vagrant.configure("2") do |config|
           ansible.limit = "all"
           ansible.groups = {
             "root_ca_nodes": [ "node1" ],
-            "intermediate_ca_nodes": [ "node2" ]
+            "intermediate_ca_nodes": [ "node2" ],
+            "server_nodes": [ "node1" ]
           }
         end
       end

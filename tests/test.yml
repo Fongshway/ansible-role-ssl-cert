@@ -9,7 +9,15 @@
   environment:
     PATH: /usr/local/bin:{{ ansible_env.PATH }}
   roles:
-  - role: jumperfly.intermediate_ca
-    intermediate_ca_common_name: int1
-  - role: jumperfly.intermediate_ca
-    intermediate_ca_common_name: int2
+  - role: jumperfly.ssl_cert
+    ssl_cert_type: intermediate
+    ssl_cert_common_name: intermediate
+  - role: jumperfly.ssl_cert
+    ssl_cert_type: intermediate
+    ssl_cert_common_name: intermediate2
+- hosts: server_nodes
+  become: yes
+  environment:
+    PATH: /usr/local/bin:{{ ansible_env.PATH }}
+  roles:
+  - role: jumperfly.ssl_cert
