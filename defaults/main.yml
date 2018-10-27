@@ -1,11 +1,21 @@
 # Defines the cfssl profile to use: one of server,client,peer,intermediate
 ssl_cert_type: server
 
+# Filename used to store the certificate
+ssl_cert_name: ansible
+
 # Common name to use for the generated certificate
-ssl_cert_common_name: ansible
+ssl_cert_common_name: "{{ ssl_cert_name }}"
 
 # Location to store keys, csrs, certificates
 ssl_cert_base_dir: /etc/pki/{{ 'ansible-ca' if ssl_cert_type == 'intermediate' else 'ansible-ssl-certs' }}
+
+# Derived fully qualified file names
+ssl_cert_file: "{{ ssl_cert_base_dir }}/{{ ssl_cert_name }}.pem"
+ssl_cert_key_file: "{{ ssl_cert_base_dir }}/{{ ssl_cert_name }}-key.pem"
+ssl_cert_csr_json_file: "{{ ssl_cert_base_dir }}/{{ ssl_cert_name }}-csr.json"
+ssl_cert_csr_file: "{{ ssl_cert_base_dir }}/{{ ssl_cert_name}}.csr"
+ssl_cert_chain_file: "{{ ssl_cert_base_dir }}/{{ ssl_cert_name }}-chain.pem"
 
 # Information to store in the certificate
 ssl_cert_country: GB

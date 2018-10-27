@@ -1,27 +1,27 @@
 - name: Ensure base directory exists
   file: path={{ ssl_cert_base_dir }} state=directory
 - name: Check if certificate exists
-  stat: path={{ ssl_cert_base_dir }}/{{ ssl_cert_common_name }}.pem
+  stat: path={{ ssl_cert_file }}
   register: stat_result
 - name: Create and sign intermediate certificate
   when: not stat_result.stat.exists
   block:
     - name: Create csr
-      template: src=csr.json dest={{ ssl_cert_base_dir }}/{{ ssl_cert_common_name }}-csr.json
+      template: src=csr.json dest={{ ssl_cert_csr_json_file }}
     - name: Save key
-      shell: cfssl genkey {{ ssl_cert_common_name }}-csr.json | cfssljson -bare {{ ssl_cert_common_name }}
+      shell: cfssl genkey {{ ssl_cert_csr_json_file }} | cfssljson -bare {{ ssl_cert_name }}
       args:
         chdir: "{{ ssl_cert_base_dir }}"
     - name: Read csr
-      slurp: src="{{ ssl_cert_base_dir }}/{{ ssl_cert_common_name}}.csr"
+      slurp: src={{ ssl_cert_csr_file }}
       register: read_csr_result
     - name: Save csr on ca delegate host
       copy:
         content: "{{ read_csr_result.content | b64decode }}"
-        dest: "{{ ssl_cert_ca_delegate_base_dir}}/{{ ssl_cert_common_name}}.csr"
+        dest: "{{ ssl_cert_ca_delegate_base_dir}}/{{ ssl_cert_name}}.csr"
       delegate_to: "{{ ssl_cert_ca_delegate }}"
     - name: Sign certificate on ca delegate host
-      shell: cfssl sign -config /etc/cfssl/config.json -profile {{ ssl_cert_type }} -ca {{ ssl_cert_ca_delegate_cert }} -ca-key {{ ssl_cert_ca_delegate_key }} {{ ssl_cert_common_name }}.csr | cfssljson -bare -stdout
+      shell: cfssl sign -config /etc/cfssl/config.json -profile {{ ssl_cert_type }} -ca {{ ssl_cert_ca_delegate_cert }} -ca-key {{ ssl_cert_ca_delegate_key }} {{ ssl_cert_name }}.csr | cfssljson -bare -stdout
       args:
         chdir: "{{ ssl_cert_ca_delegate_base_dir }}"
       delegate_to: "{{ ssl_cert_ca_delegate }}"
@@ -29,11 +29,11 @@
     - name: Save the signed cert
       copy:
         content: "{{ sign_result.stdout | regex_search(regex) }}"
-        dest: "{{ ssl_cert_base_dir }}/{{ ssl_cert_common_name}}.pem"
+        dest: "{{ ssl_cert_file }}"
       vars:
         regex: "(?s)(-----BEGIN CERTIFICATE.*END CERTIFICATE-----\\n)"
 - name: Check if certificate chain exists
-  stat: path={{ ssl_cert_base_dir }}/{{ ssl_cert_common_name }}-chain.pem
+  stat: path={{ ssl_cert_chain_file }}
   register: cert_chain_result
 - name: Save the certificate chain
   when: not cert_chain_result.stat.exists
@@ -47,4 +47,4 @@
         content: "{{ read_parent_cert_result.content | b64decode }}"
         dest: "{{ ssl_cert_base_dir }}/{{ ssl_cert_ca_delegate_chain }}"
     - name: Create certificate chain
-      shell: cat {{ ssl_cert_base_dir }}/{{ ssl_cert_common_name }}.pem {{ ssl_cert_base_dir }}/{{ ssl_cert_ca_delegate_chain }} > {{ ssl_cert_base_dir }}/{{ ssl_cert_common_name }}-chain.pem
+      shell: cat {{ ssl_cert_file}} {{ ssl_cert_base_dir }}/{{ ssl_cert_ca_delegate_chain }} > {{ ssl_cert_chain_file }}
