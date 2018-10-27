@@ -32,3 +32,19 @@
         dest: "{{ ssl_cert_base_dir }}/{{ ssl_cert_common_name}}.pem"
       vars:
         regex: "(?s)(-----BEGIN CERTIFICATE.*END CERTIFICATE-----\\n)"
+- name: Check if certificate chain exists
+  stat: path={{ ssl_cert_base_dir }}/{{ ssl_cert_common_name }}-chain.pem
+  register: cert_chain_result
+- name: Save the certificate chain
+  when: not cert_chain_result.stat.exists
+  block:
+    - name: Read parent certificate on ca delegate host
+      slurp: src={{ ssl_cert_ca_delegate_base_dir }}/{{ ssl_cert_ca_delegate_cert }}
+      delegate_to: "{{ ssl_cert_ca_delegate }}"
+      register: read_parent_cert_result
+    - name: Save parent certificate
+      copy:
+        content: "{{ read_parent_cert_result.content | b64decode }}"
+        dest: "{{ ssl_cert_base_dir }}/{{ ssl_cert_ca_delegate_chain }}"
+    - name: Create certificate chain
+      shell: cat {{ ssl_cert_base_dir }}/{{ ssl_cert_common_name }}.pem {{ ssl_cert_base_dir }}/{{ ssl_cert_ca_delegate_chain }} > {{ ssl_cert_base_dir }}/{{ ssl_cert_common_name }}-chain.pem

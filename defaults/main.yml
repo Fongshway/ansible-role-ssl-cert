@@ -21,5 +21,7 @@ ssl_cert_ca_delegate: "{{ groups['root_ca_nodes' if ssl_cert_type == 'intermedia
 ssl_cert_ca_delegate_base_dir: /etc/pki/ansible-ca
 
 # Location of the signing key and certificate on the delegate host
-ssl_cert_ca_delegate_key: "{{ 'ca-key.pem' if ssl_cert_type == 'intermediate' else 'intermediate-key.pem' }}"
-ssl_cert_ca_delegate_cert: "{{ 'ca.pem' if ssl_cert_type == 'intermediate' else 'intermediate.pem' }}"
+ssl_cert_ca_delegate_name: "{{ 'ca' if ssl_cert_type == 'intermediate' else 'intermediate' }}"
+ssl_cert_ca_delegate_key: "{{ ssl_cert_ca_delegate_name }}-key.pem"
+ssl_cert_ca_delegate_cert: "{{ ssl_cert_ca_delegate_name }}.pem"
+ssl_cert_ca_delegate_chain: "{{ ssl_cert_ca_delegate_name }}-chain.pem"
