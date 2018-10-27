@@ -2,7 +2,7 @@ dependencies:
   - jumperfly.cfssl
 
 galaxy_info:
-  role_name: intermediate_ca
+  role_name: ssl_cert
   author: jumperfly
   description: ansible-role-intermediate-ca
   license: Apache
