@@ -39,7 +39,7 @@
   when: not cert_chain_result.stat.exists
   block:
     - name: Read parent certificate on ca delegate host
-      slurp: src={{ ssl_cert_ca_delegate_base_dir }}/{{ ssl_cert_ca_delegate_cert }}
+      slurp: src={{ ssl_cert_ca_delegate_base_dir }}/{{ ssl_cert_ca_delegate_chain }}
       delegate_to: "{{ ssl_cert_ca_delegate }}"
       register: read_parent_cert_result
     - name: Save parent certificate
