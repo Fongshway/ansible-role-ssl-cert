@@ -32,19 +32,24 @@
         dest: "{{ ssl_cert_file }}"
       vars:
         regex: "(?s)(-----BEGIN CERTIFICATE.*END CERTIFICATE-----\\n)"
-- name: Check if certificate chain exists
-  stat: path={{ ssl_cert_chain_file }}
-  register: cert_chain_result
-- name: Save the certificate chain
-  when: not cert_chain_result.stat.exists
+- name: Check if parent certificate chain exists
+  stat: path={{ ssl_cert_ca_delegate_base_dir }}/{{ ssl_cert_ca_delegate_chain }}
+  register: parent_cert_chain_result
+- name: Save the parent certificate chain
+  when: not parent_cert_chain_result.stat.exists
   block:
-    - name: Read parent certificate on ca delegate host
+    - name: Read parent certificate chain on ca delegate host
       slurp: src={{ ssl_cert_ca_delegate_base_dir }}/{{ ssl_cert_ca_delegate_chain }}
       delegate_to: "{{ ssl_cert_ca_delegate }}"
       register: read_parent_cert_result
-    - name: Save parent certificate
+    - name: Save parent certificate chain
       copy:
         content: "{{ read_parent_cert_result.content | b64decode }}"
         dest: "{{ ssl_cert_base_dir }}/{{ ssl_cert_ca_delegate_chain }}"
-    - name: Create certificate chain
-      shell: cat {{ ssl_cert_file}} {{ ssl_cert_base_dir }}/{{ ssl_cert_ca_delegate_chain }} > {{ ssl_cert_chain_file }}
+- name: Check if certificate chain exists
+  stat: path={{ ssl_cert_chain_file }}
+  when: ssl_cert_type == 'intermediate'
+  register: cert_chain_result
+- name: Create the certificate chain
+  shell: cat {{ ssl_cert_file}} {{ ssl_cert_base_dir }}/{{ ssl_cert_ca_delegate_chain }} > {{ ssl_cert_chain_file }}
+  when: not cert_chain_result.skipped|default(false) and not cert_chain_result.stat.exists
