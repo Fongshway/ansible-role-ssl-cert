@@ -33,7 +33,7 @@
       vars:
         regex: "(?s)(-----BEGIN CERTIFICATE.*END CERTIFICATE-----\\n)"
 - name: Check if parent certificate chain exists
-  stat: path={{ ssl_cert_ca_delegate_base_dir }}/{{ ssl_cert_ca_delegate_chain }}
+  stat: path={{ ssl_cert_base_dir }}/{{ ssl_cert_ca_delegate_chain }}
   register: parent_cert_chain_result
 - name: Save the parent certificate chain
   when: not parent_cert_chain_result.stat.exists
