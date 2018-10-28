@@ -7,6 +7,10 @@ ssl_cert_name: ansible
 # Common name to use for the generated certificate
 ssl_cert_common_name: "{{ ssl_cert_name }}"
 
+# Hosts to be included as IP/DNS SAN entries
+ssl_cert_hosts:
+  - "{{ ssl_cert_common_name }}"
+
 # Location to store keys, csrs, certificates
 ssl_cert_base_dir: /etc/pki/{{ 'ansible-ca' if ssl_cert_type == 'intermediate' else 'ansible-ssl-certs' }}
 

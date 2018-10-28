@@ -1,5 +1,6 @@
 {
   "CN": "{{ ssl_cert_common_name }}",
+  "hosts": [ "{{ ssl_cert_hosts | join ('", "') }}" ],
   "key": {
     "algo": "rsa",
     "size": 2048

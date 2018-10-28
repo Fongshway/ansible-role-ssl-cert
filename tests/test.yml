@@ -23,4 +23,11 @@
   - role: jumperfly.ssl_cert
   - role: jumperfly.ssl_cert
     ssl_cert_name: test-name
-    ssl_cert_common_name: test-common-name
+    ssl_cert_common_name: test-common-namei
+  - role: jumperfly.ssl_cert
+    ssl_cert_name: san-test
+    ssl_cert_hosts:
+      - host1
+      - host2
+      - 127.0.0.1
+      - 10.0.0.1
