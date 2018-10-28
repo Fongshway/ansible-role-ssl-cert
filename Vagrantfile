@@ -43,6 +43,7 @@ Vagrant.configure("2") do |config|
           ansible.playbook = "tests/test.yml"
           ansible.limit = "all"
           ansible.groups = {
+            "ca_nodes": [ "node1" ],
             "root_ca_nodes": [ "node1" ],
             "intermediate_ca_nodes": [ "node2" ],
             "server_nodes": [ "node1" ]

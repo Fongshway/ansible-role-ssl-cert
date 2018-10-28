@@ -1,5 +1,5 @@
 {
-  "CN": "{{ ssl_cert_common_name }}",
+  "CN": "{{ ssl_cert_subject.common_name }}",
   "hosts": [ "{{ ssl_cert_hosts | join ('", "') }}" ],
   "key": {
     "algo": "rsa",
@@ -7,11 +7,11 @@
   },
   "names": [
     {
-      "C": "{{ ssl_cert_country }}",
-      "L": "{{ ssl_cert_city }}",
-      "O": "{{ ssl_cert_organization_name }}",
-      "OU": "{{ ssl_cert_organizational_unit_name }}",
-      "ST": "{{ ssl_cert_state }}"
+      "C": "{{ ssl_cert_subject.country }}",
+      "L": "{{ ssl_cert_subject.city }}",
+      "O": "{{ ssl_cert_subject.organization_name }}",
+      "OU": "{{ ssl_cert_subject.organizational_unit_name }}",
+      "ST": "{{ ssl_cert_subject.state }}"
     }
   ]
 }

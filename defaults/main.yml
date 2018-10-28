@@ -2,17 +2,23 @@
 ssl_cert_type: server
 
 # Filename used to store the certificate
-ssl_cert_name: ansible
+ssl_cert_name: "{{ ansible_hostname }}"
 
-# Common name to use for the generated certificate
-ssl_cert_common_name: "{{ ssl_cert_name }}"
+# Certificate subject
+ssl_cert_subject:
+  common_name: "{{ ansible_hostname }}"
+  country: GB
+  city: London
+  state: Greater London
+  organization_name: Ansible Certificate
+  organizational_unit_name: Certificate
 
 # Hosts to be included as IP/DNS SAN entries
 ssl_cert_hosts:
-  - "{{ ssl_cert_common_name }}"
+  - "{{ ssl_cert_subject.common_name }}"
 
 # Location to store keys, csrs, certificates
-ssl_cert_base_dir: /etc/pki/{{ 'ansible-ca' if ssl_cert_type == 'intermediate' else 'ansible-ssl-certs' }}
+ssl_cert_base_dir: /etc/pki/ansible-ssl-certs
 
 # Derived fully qualified file names
 ssl_cert_file: "{{ ssl_cert_base_dir }}/{{ ssl_cert_name }}.pem"
@@ -21,18 +27,11 @@ ssl_cert_csr_json_file: "{{ ssl_cert_base_dir }}/{{ ssl_cert_name }}-csr.json"
 ssl_cert_csr_file: "{{ ssl_cert_base_dir }}/{{ ssl_cert_name}}.csr"
 ssl_cert_chain_file: "{{ ssl_cert_base_dir }}/{{ ssl_cert_name }}-chain.pem"
 
-# Information to store in the certificate
-ssl_cert_country: GB
-ssl_cert_city: London
-ssl_cert_state: Greater London
-ssl_cert_organization_name: Ansible Certificate
-ssl_cert_organizational_unit_name: Certificate
-
 # The delegate host holding the CA key to sign the certificate
-ssl_cert_ca_delegate: "{{ groups['root_ca_nodes' if ssl_cert_type == 'intermediate' else 'intermediate_ca_nodes'][0] }}"
+ssl_cert_ca_delegate: "{{ groups['ca_nodes'][0] }}"
 
 # The base directory on the delegate host containing signing key, certificate
-ssl_cert_ca_delegate_base_dir: /etc/pki/ansible-ca
+ssl_cert_ca_delegate_base_dir: /etc/pki/ansible-ssl-certs
 
 # Location of the signing key and certificate on the delegate host
 ssl_cert_ca_delegate_name: "{{ 'ca' if ssl_cert_type == 'intermediate' else 'intermediate' }}"

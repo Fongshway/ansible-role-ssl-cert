@@ -21,10 +21,13 @@
     PATH: /usr/local/bin:{{ ansible_env.PATH }}
   roles:
   - role: jumperfly.ssl_cert
+    ssl_cert_ca_delegate: "{{ groups['intermediate_ca_nodes'][0] }}"
   - role: jumperfly.ssl_cert
+    ssl_cert_ca_delegate: "{{ groups['intermediate_ca_nodes'][0] }}"
     ssl_cert_name: test-name
     ssl_cert_common_name: test-common-namei
   - role: jumperfly.ssl_cert
+    ssl_cert_ca_delegate: "{{ groups['intermediate_ca_nodes'][0] }}"
     ssl_cert_name: san-test
     ssl_cert_hosts:
       - host1
