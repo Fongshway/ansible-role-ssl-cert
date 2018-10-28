@@ -1,5 +1,6 @@
 dependencies:
-  - jumperfly.cfssl
+  - src: jumperfly.cfssl
+    version: v0.1.0
 
 galaxy_info:
   role_name: ssl_cert
