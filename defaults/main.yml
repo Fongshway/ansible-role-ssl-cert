@@ -23,9 +23,27 @@ ssl_cert_base_dir: /etc/pki/ansible-ssl-certs
 # Derived fully qualified file names
 ssl_cert_file: "{{ ssl_cert_base_dir }}/{{ ssl_cert_name }}.pem"
 ssl_cert_key_file: "{{ ssl_cert_base_dir }}/{{ ssl_cert_name }}-key.pem"
-ssl_cert_csr_json_file: "{{ ssl_cert_base_dir }}/{{ ssl_cert_name }}-csr.json"
-ssl_cert_csr_file: "{{ ssl_cert_base_dir }}/{{ ssl_cert_name}}.csr"
 ssl_cert_chain_file: "{{ ssl_cert_base_dir }}/{{ ssl_cert_name }}-chain.pem"
+
+# Derived CSR JSON
+ssl_cert_csr_json_data: >
+  {
+    "CN": "{{ ssl_cert_subject.common_name }}",
+    "hosts": [ "{{ ssl_cert_hosts | join ('", "') }}" ],
+    "key": {
+      "algo": "rsa",
+      "size": 2048
+    },
+    "names": [
+      {
+        "C": "{{ ssl_cert_subject.country }}",
+        "L": "{{ ssl_cert_subject.city }}",
+        "O": "{{ ssl_cert_subject.organization_name }}",
+        "OU": "{{ ssl_cert_subject.organizational_unit_name }}",
+        "ST": "{{ ssl_cert_subject.state }}"
+      }
+    ]
+  }
 
 # The delegate host holding the CA key to sign the certificate
 ssl_cert_ca_delegate: "{{ groups['ca_nodes'][0] }}"

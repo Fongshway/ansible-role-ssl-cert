@@ -2,54 +2,63 @@
   file: path={{ ssl_cert_base_dir }} state=directory
 - name: Check if certificate exists
   stat: path={{ ssl_cert_file }}
-  register: stat_result
-- name: Create and sign intermediate certificate
-  when: not stat_result.stat.exists
-  block:
-    - name: Create csr
-      template: src=csr.json dest={{ ssl_cert_csr_json_file }}
-    - name: Save key
-      shell: cfssl genkey {{ ssl_cert_csr_json_file }} | cfssljson -bare {{ ssl_cert_name }}
-      args:
-        chdir: "{{ ssl_cert_base_dir }}"
-    - name: Read csr
-      slurp: src={{ ssl_cert_csr_file }}
-      register: read_csr_result
-    - name: Save csr on ca delegate host
-      copy:
-        content: "{{ read_csr_result.content | b64decode }}"
-        dest: "{{ ssl_cert_ca_delegate_base_dir}}/{{ ssl_cert_name}}.csr"
-      delegate_to: "{{ ssl_cert_ca_delegate }}"
-    - name: Sign certificate on ca delegate host
-      shell: cfssl sign -config /etc/cfssl/config.json -profile {{ ssl_cert_type }} -ca {{ ssl_cert_ca_delegate_cert }} -ca-key {{ ssl_cert_ca_delegate_key }} {{ ssl_cert_name }}.csr | cfssljson -bare -stdout
-      args:
-        chdir: "{{ ssl_cert_ca_delegate_base_dir }}"
-      delegate_to: "{{ ssl_cert_ca_delegate }}"
-      register: sign_result
-    - name: Save the signed cert
-      copy:
-        content: "{{ sign_result.stdout | regex_search(regex) }}"
-        dest: "{{ ssl_cert_file }}"
-      vars:
-        regex: "(?s)(-----BEGIN CERTIFICATE.*END CERTIFICATE-----\\n)"
+  register: stat_cert_result
 - name: Check if parent certificate chain exists
   stat: path={{ ssl_cert_base_dir }}/{{ ssl_cert_ca_delegate_chain }}
-  register: parent_cert_chain_result
-- name: Save the parent certificate chain
-  when: not parent_cert_chain_result.stat.exists
+  register: stat_parent_chain_result
+- name: Read parent certificate chain
+  when: stat_parent_chain_result.stat.exists
   block:
-    - name: Read parent certificate chain on ca delegate host
-      slurp: src={{ ssl_cert_ca_delegate_base_dir }}/{{ ssl_cert_ca_delegate_chain }}
+  - name: Read parent certificate chain
+    when: stat_parent_chain_result.stat.exists
+    slurp: src={{ ssl_cert_base_dir }}/{{ ssl_cert_ca_delegate_chain }}
+    register: slurp_parent_chain_result
+  - name: Set parent certificate chain as fact
+    set_fact:
+      ssl_cert_parent_chain_data: "{{ slurp_parent_chain_result.content | b64decode }}"
+- name: Read parent certificate chain on ca delegate host
+  when: not stat_parent_chain_result.stat.exists
+  block:
+  - name: Read parent certificate chain on ca delegate host
+    delegate_to: "{{ ssl_cert_ca_delegate }}"
+    slurp: src={{ ssl_cert_ca_delegate_base_dir }}/{{ ssl_cert_ca_delegate_chain }}
+    register: slurp_parent_chain_result
+  - name: Set parent certificate chain as fact
+    set_fact:
+      ssl_cert_parent_chain_data: "{{ slurp_parent_chain_result.content | b64decode }}"
+
+- name: Create certificate
+  when: not stat_cert_result.stat.exists
+  block:
+    - name: Generate certificate on ca delegate host
       delegate_to: "{{ ssl_cert_ca_delegate }}"
-      register: read_parent_cert_result
+      shell: cfssl gencert -config /etc/cfssl/config.json -profile {{ ssl_cert_type }} -ca {{ ssl_cert_ca_delegate_cert }} -ca-key {{ ssl_cert_ca_delegate_key }} - | cfssljson -bare -stdout
+      args:
+        chdir: "{{ ssl_cert_ca_delegate_base_dir }}"
+        stdin: "{{ ssl_cert_csr_json_data | to_json }}"
+      register: gencert_result
+    - name: Parse result
+      set_fact:
+        ssl_cert_key_data: "{{ gencert_result.stdout | regex_search(key_regex) }}"
+        ssl_cert_data: "{{ gencert_result.stdout | regex_search(cert_regex) }}"
+      vars:
+        key_regex: "(?s)(-----BEGIN RSA PRIVATE KEY.*END RSA PRIVATE KEY-----\\n)"
+        cert_regex: "(?s)(-----BEGIN CERTIFICATE.*END CERTIFICATE-----\\n)"
+    ###
+    - name: Save key
+      copy:
+        dest: "{{ ssl_cert_key_file }}"
+        content: "{{ ssl_cert_key_data }}"
+    - name: Save certificate
+      copy:
+        dest: "{{ ssl_cert_file }}"
+        content: "{{ ssl_cert_data }}"
+    - name: Save certificate chain
+      when: ssl_cert_type == 'intermediate'
+      copy:
+        dest: "{{ ssl_cert_chain_file }}"
+        content: "{{ ssl_cert_data + ssl_cert_parent_chain_data }}"
     - name: Save parent certificate chain
       copy:
-        content: "{{ read_parent_cert_result.content | b64decode }}"
         dest: "{{ ssl_cert_base_dir }}/{{ ssl_cert_ca_delegate_chain }}"
-- name: Check if certificate chain exists
-  stat: path={{ ssl_cert_chain_file }}
-  when: ssl_cert_type == 'intermediate'
-  register: cert_chain_result
-- name: Create the certificate chain
-  shell: cat {{ ssl_cert_file}} {{ ssl_cert_base_dir }}/{{ ssl_cert_ca_delegate_chain }} > {{ ssl_cert_chain_file }}
-  when: not cert_chain_result.skipped|default(false) and not cert_chain_result.stat.exists
+        content: "{{ ssl_cert_parent_chain_data }}"
