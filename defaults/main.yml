@@ -17,13 +17,16 @@ ssl_cert_subject:
 ssl_cert_hosts:
   - "{{ ssl_cert_subject.common_name }}"
 
-# Location to store keys, csrs, certificates
-ssl_cert_base_dir: /etc/pki/ansible-ssl-certs
+# Defines how to store the certificate and keys: one of file,k8s-secret
+ssl_cert_storage: file
 
-# Derived fully qualified file names
-ssl_cert_file: "{{ ssl_cert_base_dir }}/{{ ssl_cert_name }}.pem"
-ssl_cert_key_file: "{{ ssl_cert_base_dir }}/{{ ssl_cert_name }}-key.pem"
-ssl_cert_chain_file: "{{ ssl_cert_base_dir }}/{{ ssl_cert_name }}-chain.pem"
+# Configuration for file storage
+ssl_cert_file_base_dir: /etc/pki/ansible-ssl-certs
+ssl_cert_file:
+  # Derived fully qualified file names
+  cert: "{{ ssl_cert_file_base_dir }}/{{ ssl_cert_name }}.pem"
+  key: "{{ ssl_cert_file_base_dir }}/{{ ssl_cert_name }}-key.pem"
+  chain: "{{ ssl_cert_file_base_dir }}/{{ ssl_cert_name }}-chain.pem"
 
 # Derived CSR JSON
 ssl_cert_csr_json_data: >

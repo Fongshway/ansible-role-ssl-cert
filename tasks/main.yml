@@ -1,34 +1,8 @@
-- name: Ensure base directory exists
-  file: path={{ ssl_cert_base_dir }} state=directory
-- name: Check if certificate exists
-  stat: path={{ ssl_cert_file }}
-  register: stat_cert_result
-- name: Check if parent certificate chain exists
-  stat: path={{ ssl_cert_base_dir }}/{{ ssl_cert_ca_delegate_chain }}
-  register: stat_parent_chain_result
-- name: Read parent certificate chain
-  when: stat_parent_chain_result.stat.exists
-  block:
-  - name: Read parent certificate chain
-    when: stat_parent_chain_result.stat.exists
-    slurp: src={{ ssl_cert_base_dir }}/{{ ssl_cert_ca_delegate_chain }}
-    register: slurp_parent_chain_result
-  - name: Set parent certificate chain as fact
-    set_fact:
-      ssl_cert_parent_chain_data: "{{ slurp_parent_chain_result.content | b64decode }}"
-- name: Read parent certificate chain on ca delegate host
-  when: not stat_parent_chain_result.stat.exists
-  block:
-  - name: Read parent certificate chain on ca delegate host
-    delegate_to: "{{ ssl_cert_ca_delegate }}"
-    slurp: src={{ ssl_cert_ca_delegate_base_dir }}/{{ ssl_cert_ca_delegate_chain }}
-    register: slurp_parent_chain_result
-  - name: Set parent certificate chain as fact
-    set_fact:
-      ssl_cert_parent_chain_data: "{{ slurp_parent_chain_result.content | b64decode }}"
+- name: Include read tasks
+  include: "{{ ssl_cert_storage }}/read-certs.yml"
 
 - name: Create certificate
-  when: not stat_cert_result.stat.exists
+  when: not ssl_cert_exists
   block:
     - name: Generate certificate on ca delegate host
       delegate_to: "{{ ssl_cert_ca_delegate }}"
@@ -44,21 +18,5 @@
       vars:
         key_regex: "(?s)(-----BEGIN RSA PRIVATE KEY.*END RSA PRIVATE KEY-----\\n)"
         cert_regex: "(?s)(-----BEGIN CERTIFICATE.*END CERTIFICATE-----\\n)"
-    ###
-    - name: Save key
-      copy:
-        dest: "{{ ssl_cert_key_file }}"
-        content: "{{ ssl_cert_key_data }}"
-    - name: Save certificate
-      copy:
-        dest: "{{ ssl_cert_file }}"
-        content: "{{ ssl_cert_data }}"
-    - name: Save certificate chain
-      when: ssl_cert_type == 'intermediate'
-      copy:
-        dest: "{{ ssl_cert_chain_file }}"
-        content: "{{ ssl_cert_data + ssl_cert_parent_chain_data }}"
-    - name: Save parent certificate chain
-      copy:
-        dest: "{{ ssl_cert_base_dir }}/{{ ssl_cert_ca_delegate_chain }}"
-        content: "{{ ssl_cert_parent_chain_data }}"
+    - name: Include write tasks
+      include: "{{ ssl_cert_storage }}/write-certs.yml"

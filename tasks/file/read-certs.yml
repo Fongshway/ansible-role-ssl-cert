@@ -1,0 +1,35 @@
+- name: Ensure base directory exists
+  file: path={{ ssl_cert_file_base_dir }} state=directory
+
+- name: Check if certificate exists
+  stat: path={{ ssl_cert_file.cert }}
+  register: stat_cert_result
+
+- name: Check if parent certificate chain exists
+  stat: path={{ ssl_cert_file_base_dir }}/{{ ssl_cert_ca_delegate_chain }}
+  register: stat_parent_chain_result
+- name: Read parent certificate chain
+  when: stat_parent_chain_result.stat.exists
+  block:
+  - name: Read parent certificate chain
+    when: stat_parent_chain_result.stat.exists
+    slurp: src={{ ssl_cert_file_base_dir }}/{{ ssl_cert_ca_delegate_chain }}
+    register: slurp_parent_chain_result
+  - name: Set parent certificate chain as fact
+    set_fact:
+      ssl_cert_parent_chain_data_tmp: "{{ slurp_parent_chain_result.content | b64decode }}"
+- name: Read parent certificate chain on ca delegate host
+  when: not stat_parent_chain_result.stat.exists
+  block:
+  - name: Read parent certificate chain on ca delegate host
+    delegate_to: "{{ ssl_cert_ca_delegate }}"
+    slurp: src={{ ssl_cert_ca_delegate_base_dir }}/{{ ssl_cert_ca_delegate_chain }}
+    register: slurp_parent_chain_result
+  - name: Set parent certificate chain as fact
+    set_fact:
+      ssl_cert_parent_chain_data_tmp: "{{ slurp_parent_chain_result.content | b64decode }}"
+
+- name: Set certificate reading facts
+  set_fact:
+    ssl_cert_exists: "{{ stat_cert_result.stat.exists }}"
+    ssl_cert_parent_chain_data: "{{ ssl_cert_parent_chain_data_tmp }}"

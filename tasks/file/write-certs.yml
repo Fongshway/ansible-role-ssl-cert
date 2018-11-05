@@ -1,0 +1,17 @@
+- name: Save key
+  copy:
+    dest: "{{ ssl_cert_file.key }}"
+    content: "{{ ssl_cert_key_data }}"
+- name: Save certificate
+  copy:
+    dest: "{{ ssl_cert_file.cert }}"
+    content: "{{ ssl_cert_data }}"
+- name: Save certificate chain
+  when: ssl_cert_type == 'intermediate'
+  copy:
+    dest: "{{ ssl_cert_file.chain }}"
+    content: "{{ ssl_cert_data + ssl_cert_parent_chain_data }}"
+- name: Save parent certificate chain
+  copy:
+    dest: "{{ ssl_cert_file_base_dir }}/{{ ssl_cert_ca_delegate_chain }}"
+    content: "{{ ssl_cert_parent_chain_data }}"
