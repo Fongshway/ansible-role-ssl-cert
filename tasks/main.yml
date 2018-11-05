@@ -2,7 +2,7 @@
   include: "{{ ssl_cert_storage }}/read-certs.yml"
 
 - name: Create certificate
-  when: not ssl_cert_exists
+  when: not ssl_cert_exists | default(false)
   block:
     - name: Generate certificate on ca delegate host
       delegate_to: "{{ ssl_cert_ca_delegate }}"
