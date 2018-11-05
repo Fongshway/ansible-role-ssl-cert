@@ -1,0 +1,22 @@
+- name: Check if secret exists
+  k8s:
+    host: http://localhost:8080
+    api_version: v1
+    kind: Secret
+    name: "{{ ssl_cert_k8s_secret_name }}"
+    namespace: "{{ ssl_cert_k8s_secret_namespace }}"
+  register: k8s_result
+- name: Set ssl_cert_exists fact
+  set_fact:
+    ssl_cert_exists: "{{ k8s_result.result.data is defined }}"
+
+- name: Read parent certificate chain
+  when: not ssl_cert_exists
+  block:
+    - name: Read parent certificate chain
+      slurp:
+        src: "{{ ssl_cert_file_base_dir }}/{{ ssl_cert_ca_delegate_chain }}"
+      register: slurp_parent_chain_result
+    - name: Set ssl_cert_parent_chain_data fact
+      set_fact:
+        ssl_cert_parent_chain_data: "{{ slurp_parent_chain_result.content | b64decode }}"

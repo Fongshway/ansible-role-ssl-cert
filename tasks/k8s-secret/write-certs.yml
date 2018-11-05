@@ -1,0 +1,13 @@
+- name: Save secret
+  k8s:
+    host: http://localhost:8080
+    definition:
+      apiVersion: v1
+      kind: Secret
+      metadata:
+        name: "{{ ssl_cert_k8s_secret_name }}"
+        namespace: "{{ ssl_cert_k8s_secret_namespace }}"
+      data:
+        ca.crt: "{{ ssl_cert_parent_chain_data | b64encode }}"
+        tls.crt: "{{ ssl_cert_data | b64encode }}"
+        tls.key: "{{ ssl_cert_key_data | b64encode }}"

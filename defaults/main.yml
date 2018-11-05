@@ -28,6 +28,14 @@ ssl_cert_file:
   key: "{{ ssl_cert_file_base_dir }}/{{ ssl_cert_name }}-key.pem"
   chain: "{{ ssl_cert_file_base_dir }}/{{ ssl_cert_name }}-chain.pem"
 
+# Configuration for k8s-secret storage
+ssl_cert_k8s_secret_name: ssl-cert
+ssl_cert_k8s_secret_namespace: default
+ssl_cert_k8s_secret_filename:
+  cert: tls.crt
+  key: tls.key
+  ca: ca.crt
+
 # Derived CSR JSON
 ssl_cert_csr_json_data: >
   {
