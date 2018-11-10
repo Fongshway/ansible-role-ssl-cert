@@ -4,6 +4,7 @@
     definition:
       apiVersion: v1
       kind: Secret
+      type: kubernetes.io/tls
       metadata:
         name: "{{ ssl_cert_k8s_secret_name }}"
         namespace: "{{ ssl_cert_k8s_secret_namespace }}"
