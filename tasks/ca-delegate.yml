@@ -1,0 +1,29 @@
+- name: Read intermediate certificate chain on ca delegate host
+  when: not ssl_intermediate_cert_exists
+  block:
+  - name: Read intermediate certificate chain on ca delegate host
+    delegate_to: "{{ ssl_cert_ca_delegate }}"
+    slurp:
+      src: "{{ ssl_cert_ca_delegate_base_dir }}/{{ ssl_cert_ca_delegate_chain }}"
+    register: slurp_intermediate_chain_result
+  - name: Set intermediate certificate chain as fact
+    set_fact:
+      ssl_intermediate_cert_data: "{{ slurp_intermediate_chain_result.content | b64decode }}"
+
+- name: Create certificate
+  when: not ssl_cert_exists
+  block:
+    - name: Generate certificate on ca delegate host
+      delegate_to: "{{ ssl_cert_ca_delegate }}"
+      shell: cfssl gencert -config /etc/cfssl/config.json -profile {{ ssl_cert_type }} -ca {{ ssl_cert_ca_delegate_cert }} -ca-key {{ ssl_cert_ca_delegate_key }} - | cfssljson -bare -stdout
+      args:
+        chdir: "{{ ssl_cert_ca_delegate_base_dir }}"
+        stdin: "{{ ssl_cert_csr_json_data | to_json }}"
+      register: gencert_result
+    - name: Parse result
+      set_fact:
+        ssl_cert_key_data: "{{ gencert_result.stdout | regex_search(key_regex) }}"
+        ssl_cert_data: "{{ gencert_result.stdout | regex_search(cert_regex) }}"
+      vars:
+        key_regex: "(?s)(-----BEGIN RSA PRIVATE KEY.*END RSA PRIVATE KEY-----\\n)"
+        cert_regex: "(?s)(-----BEGIN CERTIFICATE.*END CERTIFICATE-----\\n)"

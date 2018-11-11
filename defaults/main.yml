@@ -1,3 +1,6 @@
+# Defines the CA used to sign the certificates: one of delegate,acme
+ssl_ca_type: delegate
+
 # Defines the cfssl profile to use: one of server,client,peer,intermediate
 ssl_cert_type: server
 

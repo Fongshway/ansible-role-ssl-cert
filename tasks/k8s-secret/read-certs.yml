@@ -1,22 +1,15 @@
 - name: Check if secret exists
-  k8s:
-    host: http://localhost:8080
-    api_version: v1
+  k8s_facts:
+    kubeconfig: /etc/kubernetes/kubeconfig-local
     kind: Secret
     name: "{{ ssl_cert_k8s_secret_name }}"
     namespace: "{{ ssl_cert_k8s_secret_namespace }}"
   register: k8s_result
-- name: Set ssl_cert_exists fact
+- name: Set certificate reading facts
   set_fact:
-    ssl_cert_exists: "{{ k8s_result.result.data is defined }}"
-
-- name: Read parent certificate chain
-  when: not ssl_cert_exists
-  block:
-    - name: Read parent certificate chain
-      slurp:
-        src: "{{ ssl_cert_file_base_dir }}/{{ ssl_cert_ca_delegate_chain }}"
-      register: slurp_parent_chain_result
-    - name: Set ssl_cert_parent_chain_data fact
-      set_fact:
-        ssl_cert_parent_chain_data: "{{ slurp_parent_chain_result.content | b64decode }}"
+    ssl_cert_exists: "{{ k8s_result.resources|length > 0 }}"
+    ssl_intermediate_cert_exists: "{{ k8s_result.resources|length > 0 }}"
+- name: Set intermediate certificate chain fact
+  when: ssl_intermediate_cert_exists
+  set_fact:
+    ssl_intermediate_cert_data: "{{ k8s_result.resources[0].data['ca.crt'] | b64decode }}"
