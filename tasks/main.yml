@@ -1,8 +1,24 @@
 - name: Include read tasks
   include: "{{ ssl_cert_storage }}/read-certs.yml"
 
+- name: Generate key and CSR
+  when: not ssl_cert_exists
+  block:
+  - name: Generate key and CSR
+    shell: cfssl genkey -config /etc/cfssl/config.json -profile {{ ssl_cert_type }} - | cfssljson -bare -stdout
+    args:
+      stdin: "{{ ssl_cert_csr_json_data | to_json }}"
+    register: genkey_result
+  - name: Parse result
+    set_fact:
+      ssl_cert_key_data: "{{ genkey_result.stdout | regex_search(key_regex) }}\n"
+      ssl_cert_csr_data: "{{ genkey_result.stdout | regex_search(csr_regex) }}\n"
+    vars:
+      key_regex: "(?s)(-----BEGIN RSA PRIVATE KEY.*END RSA PRIVATE KEY-----)"
+      csr_regex: "(?s)(-----BEGIN CERTIFICATE REQUEST.*END CERTIFICATE REQUEST-----)"
+
 - name: Include CA tasks
-  include: ca-{{ ssl_ca_type }}.yml
+  include: ca-{{ ssl_cert_ca_type }}.yml
 
 - name: Include write tasks
   include: "{{ ssl_cert_storage }}/write-certs.yml"

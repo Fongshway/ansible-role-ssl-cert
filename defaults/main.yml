@@ -1,5 +1,5 @@
-# Defines the CA used to sign the certificates: one of delegate,acme
-ssl_ca_type: delegate
+# Defines the CA used to sign the certificates: one of delegate,acme-http
+ssl_cert_ca_type: delegate
 
 # Defines the cfssl profile to use: one of server,client,peer,intermediate
 ssl_cert_type: server
@@ -39,6 +39,14 @@ ssl_cert_k8s_secret_filename:
   key: tls.key
   ca: ca.crt
 
+# Configuration for acme CA
+ssl_cert_acme_account_key: /etc/pki/tls/private/le_account.pem
+ssl_cert_acme_staging: yes
+ssl_cert_acme_staging_directory: https://acme-staging.api.letsencrypt.org/directory
+ssl_cert_acme_prod_directory: https://acme-v01.api.letsencrypt.org/directory
+ssl_cert_acme_directory: "{{ ssl_cert_acme_staging_directory if ssl_cert_acme_staging else ssl_cert_acme_prod_directory }}"
+ssl_cert_acme_agreement: https://letsencrypt.org/documents/LE-SA-v1.2-November-15-2017.pdf
+
 # Derived CSR JSON
 ssl_cert_csr_json_data: >
   {
@@ -68,7 +76,7 @@ ssl_cert_ca_delegate_base_dir: /etc/pki/ansible-ssl-certs
 # Location of the signing key and certificate on the delegate host
 ssl_cert_ca_delegate_name: "{{ 'ca' if ssl_cert_type == 'intermediate' else 'intermediate' }}"
 
-# Derived fully qualified file names on the delegate host
+# Derived file names on the delegate host
 ssl_cert_ca_delegate_key: "{{ ssl_cert_ca_delegate_name }}-key.pem"
 ssl_cert_ca_delegate_cert: "{{ ssl_cert_ca_delegate_name }}.pem"
 ssl_cert_ca_delegate_chain: "{{ ssl_cert_ca_delegate_name }}-chain.pem"
