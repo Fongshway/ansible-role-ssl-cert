@@ -9,14 +9,9 @@
     copy:
       dest: "{{ ssl_cert_file.cert }}"
       content: "{{ ssl_cert_data }}"
-  - name: Save certificate chain
-    when: ssl_cert_type == 'intermediate'
-    copy:
-      dest: "{{ ssl_cert_file.chain }}"
-      content: "{{ ssl_cert_data + ssl_intermediate_cert_data if ssl_cert_type == 'intermediate' else ssl_intermediate_cert_data }}"
 
 - name: Save intermediate certificate chain
   when: not ssl_intermediate_cert_exists
   copy:
     dest: "{{ ssl_cert_file.chain }}"
-    content: "{{ ssl_intermediate_cert_data }}"
+    content: "{{ ssl_cert_data + ssl_intermediate_cert_data if ssl_cert_type == 'intermediate' else ssl_intermediate_cert_data }}"
