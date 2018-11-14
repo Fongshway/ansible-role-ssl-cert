@@ -1,68 +1,71 @@
-- name: Ensure httpd is installed
-  package:
-    name: httpd
-    state: installed
-- name: Ensure httpd is running and enabled
-  service:
-    name: httpd
-    state: started
-    enabled: yes
-- name: Ensure acme base directory exists
-  file:
-    path: /var/www/html/.well-known/acme-challenge
-    state: directory
-- name: Generate account key if not present
-  openssl_privatekey:
-    path: "{{ ssl_cert_acme_account_key }}"
+- name: Run acme tasks
+  when: not ssl_cert_exists
+  block:
+  - name: Ensure httpd is installed
+    package:
+      name: httpd
+      state: installed
+  - name: Ensure httpd is running and enabled
+    service:
+      name: httpd
+      state: started
+      enabled: yes
+  - name: Ensure acme base directory exists
+    file:
+      path: /var/www/html/.well-known/acme-challenge
+      state: directory
+  - name: Generate account key if not present
+    openssl_privatekey:
+      path: "{{ ssl_cert_acme_account_key }}"
 
-- name: Save csr in temp location
-  copy:
-    dest: /tmp/{{ ssl_cert_name }}.csr
-    content: "{{ ssl_cert_csr_data }}"
+  - name: Save csr in temp location
+    copy:
+      dest: /tmp/{{ ssl_cert_name }}.csr
+      content: "{{ ssl_cert_csr_data }}"
 
-- name: Send first acme request
-  acme_certificate:
-    agreement: "{{ ssl_cert_acme_agreement }}"
-    acme_directory: "{{ ssl_cert_acme_directory }}"
-    acme_version: 1
-    account_key: "{{ ssl_cert_acme_account_key }}"
-    csr: /tmp/{{ ssl_cert_name }}.csr
-    dest: /tmp/{{ ssl_cert_name }}.crt
-  register: acme_challenge_result
-- name: Copy acme http-01 resource
-  copy:
-    dest: /var/www/html/{{ acme_challenge_result['challenge_data'][ssl_cert_subject.common_name]['http-01']['resource'] }}
-    content: "{{ acme_challenge_result['challenge_data'][ssl_cert_subject.common_name]['http-01']['resource_value'] }}"
-  when: acme_challenge_result.changed
-- name: Send second acme request
-  acme_certificate:
-    agreement: "{{ ssl_cert_acme_agreement }}"
-    acme_directory: "{{ ssl_cert_acme_directory }}"
-    acme_version: 1
-    account_key: "{{ ssl_cert_acme_account_key }}"
-    csr: /tmp/{{ ssl_cert_name }}.csr
-    dest: /tmp/{{ ssl_cert_name }}.crt
-    chain_dest: /tmp/{{ ssl_cert_name }}-chain.crt
-    data: "{{ acme_challenge_result }}"
+  - name: Send first acme request
+    acme_certificate:
+      agreement: "{{ ssl_cert_acme_agreement }}"
+      acme_directory: "{{ ssl_cert_acme_directory }}"
+      acme_version: 1
+      account_key: "{{ ssl_cert_acme_account_key }}"
+      csr: /tmp/{{ ssl_cert_name }}.csr
+      dest: /tmp/{{ ssl_cert_name }}.crt
+    register: acme_challenge_result
+  - name: Copy acme http-01 resource
+    copy:
+      dest: /var/www/html/{{ acme_challenge_result['challenge_data'][ssl_cert_subject.common_name]['http-01']['resource'] }}
+      content: "{{ acme_challenge_result['challenge_data'][ssl_cert_subject.common_name]['http-01']['resource_value'] }}"
+    when: acme_challenge_result.changed
+  - name: Send second acme request
+    acme_certificate:
+      agreement: "{{ ssl_cert_acme_agreement }}"
+      acme_directory: "{{ ssl_cert_acme_directory }}"
+      acme_version: 1
+      account_key: "{{ ssl_cert_acme_account_key }}"
+      csr: /tmp/{{ ssl_cert_name }}.csr
+      dest: /tmp/{{ ssl_cert_name }}.crt
+      chain_dest: /tmp/{{ ssl_cert_name }}-chain.crt
+      data: "{{ acme_challenge_result }}"
 
-- name: Read certificate from temp location
-  slurp:
-    src: /tmp/{{ ssl_cert_name }}.crt
-  register: slurp_cert_result
-- name: Read certificate chain from temp location
-  slurp:
-    src: /tmp/{{ ssl_cert_name }}-chain.crt
-  register: slurp_chain_result
-- name: Set certificate data as facts
-  set_fact:
-    ssl_cert_data: "{{ slurp_cert_result.content | b64decode }}"
-    ssl_intermediate_cert_data: "{{ slurp_chain_result.content | b64decode }}"
+  - name: Read certificate from temp location
+    slurp:
+      src: /tmp/{{ ssl_cert_name }}.crt
+    register: slurp_cert_result
+  - name: Read certificate chain from temp location
+    slurp:
+      src: /tmp/{{ ssl_cert_name }}-chain.crt
+    register: slurp_chain_result
+  - name: Set certificate data as facts
+    set_fact:
+      ssl_cert_data: "{{ slurp_cert_result.content | b64decode }}"
+      ssl_intermediate_cert_data: "{{ slurp_chain_result.content | b64decode }}"
 
-- name: Delete temporary files
-  file:
-    path: /tmp/{{ ssl_cert_name + item }}
-    state: absent
-  loop:
-    - .csr
-    - .crt
-    - -chain.crt
+  - name: Delete temporary files
+    file:
+      path: /tmp/{{ ssl_cert_name + item }}
+      state: absent
+    loop:
+      - .csr
+      - .crt
+      - -chain.crt
