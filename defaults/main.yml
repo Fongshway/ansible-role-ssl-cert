@@ -8,17 +8,16 @@ ssl_cert_type: server
 ssl_cert_name: "{{ ansible_hostname }}"
 
 # Certificate subject
-ssl_cert_subject:
-  common_name: "{{ ansible_hostname }}"
-  country: GB
-  city: London
-  state: Greater London
-  organization_name: Ansible Certificate
-  organizational_unit_name: Certificate
+ssl_cert_subject_common_name: "{{ ansible_hostname }}"
+ssl_cert_subject_organization_name: Default Organization
+#ssl_cert_subject_country: undefined
+#ssl_cert_subject_city: undefined
+#ssl_cert_subject_state: undefined
+#ssl_cert_subject_organizational_unit_name: undefined
 
 # Hosts to be included as IP/DNS SAN entries
 ssl_cert_hosts:
-  - "{{ ssl_cert_subject.common_name }}"
+  - "{{ ssl_cert_subject_common_name }}"
 
 # Defines how to store the certificate and keys: one of file,k8s-secret
 ssl_cert_storage: file
@@ -46,26 +45,6 @@ ssl_cert_acme_staging_directory: https://acme-staging.api.letsencrypt.org/direct
 ssl_cert_acme_prod_directory: https://acme-v01.api.letsencrypt.org/directory
 ssl_cert_acme_directory: "{{ ssl_cert_acme_staging_directory if ssl_cert_acme_staging else ssl_cert_acme_prod_directory }}"
 ssl_cert_acme_agreement: https://letsencrypt.org/documents/LE-SA-v1.2-November-15-2017.pdf
-
-# Derived CSR JSON
-ssl_cert_csr_json_data: >
-  {
-    "CN": "{{ ssl_cert_subject.common_name }}",
-    "hosts": [ "{{ ssl_cert_hosts | join ('", "') }}" ],
-    "key": {
-      "algo": "rsa",
-      "size": 2048
-    },
-    "names": [
-      {
-        "C": "{{ ssl_cert_subject.country }}",
-        "L": "{{ ssl_cert_subject.city }}",
-        "O": "{{ ssl_cert_subject.organization_name }}",
-        "OU": "{{ ssl_cert_subject.organizational_unit_name }}",
-        "ST": "{{ ssl_cert_subject.state }}"
-      }
-    ]
-  }
 
 # The delegate host holding the CA key to sign the certificate
 ssl_cert_ca_delegate: "{{ groups['ca_nodes'][0] }}"

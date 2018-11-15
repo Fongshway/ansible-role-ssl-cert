@@ -1,0 +1,19 @@
+# These are generally not expected to change, so defined in vars instead of defaults
+ssl_cert_csr_json_data: >
+  {
+    "CN": "{{ ssl_cert_subject_common_name }}",
+    "hosts": [ "{{ ssl_cert_hosts | join ('", "') }}" ],
+    "key": {
+      "algo": "rsa",
+      "size": 2048
+    },
+    "names": [
+      {
+        "O": "{{ ssl_cert_subject_organization_name }}"
+        {% if ssl_cert_subject_organizational_unit_name is defined %},"OU": "{{ ssl_cert_subject_organizational_unit_name }}"{% endif %}
+        {% if ssl_cert_subject_country is defined %},"C": "{{ ssl_cert_subject_country }}",{% endif %}
+        {% if ssl_cert_subject_city is defined %},"L": "{{ ssl_cert_subject_city }}"{% endif %}
+        {% if ssl_cert_subject_state is defined %},"ST": "{{ ssl_cert_subject_state }}"{% endif %}
+      }
+    ]
+  }

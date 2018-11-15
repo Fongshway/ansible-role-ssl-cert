@@ -33,6 +33,7 @@
   - role: jumperfly.ssl_cert
     ssl_cert_ca_delegate: "{{ groups['intermediate_ca_nodes'][0] }}"
     ssl_cert_name: san-test
+    ssl_cert_subject_country: GB
     ssl_cert_hosts:
       - host1
       - host2
