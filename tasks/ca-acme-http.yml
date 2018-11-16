@@ -34,8 +34,8 @@
     register: acme_challenge_result
   - name: Copy acme http-01 resource
     copy:
-      dest: /var/www/html/{{ acme_challenge_result['challenge_data'][ssl_cert_subject.common_name]['http-01']['resource'] }}
-      content: "{{ acme_challenge_result['challenge_data'][ssl_cert_subject.common_name]['http-01']['resource_value'] }}"
+      dest: /var/www/html/{{ acme_challenge_result['challenge_data'][ssl_cert_subject_common_name]['http-01']['resource'] }}
+      content: "{{ acme_challenge_result['challenge_data'][ssl_cert_subject_common_name]['http-01']['resource_value'] }}"
     when: acme_challenge_result.changed
   - name: Send second acme request
     acme_certificate:
