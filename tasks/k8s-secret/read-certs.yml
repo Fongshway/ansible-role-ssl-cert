@@ -2,7 +2,7 @@
   k8s_facts:
     kubeconfig: /etc/kubernetes/kubeconfig-local
     kind: Secret
-    name: "{{ ssl_cert_k8s_secret_name }}"
+    name: "{{ ssl_cert_name }}"
     namespace: "{{ ssl_cert_k8s_secret_namespace }}"
   register: k8s_result
 - name: Set certificate reading facts

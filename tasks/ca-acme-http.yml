@@ -14,9 +14,18 @@
     file:
       path: /var/www/html/.well-known/acme-challenge
       state: directory
+  - name: Check if account key exists
+    stat:
+      path: "{{ ssl_cert_acme_account_key }}"
+    register: account_key_result
   - name: Generate account key if not present
     openssl_privatekey:
       path: "{{ ssl_cert_acme_account_key }}"
+    when: not account_key_result.stat.exists and ssl_cert_acme_autogenerate_account_key
+  - name: Fail if account key not present and autogenerate disabled
+    fail:
+      msg: "Account key {{ ssl_cert_acme_account_key }}. Please create on or set ssl_cert_acme_autogenerate_account_key=yes."
+    when: not account_key_result.stat.exists and not ssl_cert_acme_autogenerate_account_key
 
   - name: Save csr in temp location
     copy:

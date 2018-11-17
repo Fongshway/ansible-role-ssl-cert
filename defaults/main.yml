@@ -1,61 +1,44 @@
+# A unique name for the certificate. Used as a name when storing the certificate.
+ssl_cert_name: "{{ ansible_hostname }}"
+
+# Defines how to store the certificate and keys: one of file,k8s-secret
+ssl_cert_storage: file
+
 # Defines the CA used to sign the certificates: one of delegate,acme-http
 ssl_cert_ca_type: delegate
 
 # Defines the cfssl profile to use: one of server,client,peer,intermediate
 ssl_cert_type: server
 
-# Filename used to store the certificate
-ssl_cert_name: "{{ ansible_hostname }}"
-
-# Certificate subject
-ssl_cert_subject_common_name: "{{ ansible_hostname }}"
-ssl_cert_subject_organization_name: Default Organization
-#ssl_cert_subject_country: undefined
-#ssl_cert_subject_city: undefined
-#ssl_cert_subject_state: undefined
-#ssl_cert_subject_organizational_unit_name: undefined
+# Certificate subject common name
+ssl_cert_subject_common_name: "{{ ssl_cert_name }}"
 
 # Hosts to be included as IP/DNS SAN entries
 ssl_cert_hosts:
   - "{{ ssl_cert_subject_common_name }}"
 
-# Defines how to store the certificate and keys: one of file,k8s-secret
-ssl_cert_storage: file
+# Certificate subject (remaining fields)
+#ssl_cert_subject_organization_name: undefined
+#ssl_cert_subject_country: undefined
+#ssl_cert_subject_city: undefined
+#ssl_cert_subject_state: undefined
+#ssl_cert_subject_organizational_unit_name: undefined
 
 # Configuration for file storage
 ssl_cert_file_base_dir: /etc/pki/ansible-ssl-certs
-ssl_cert_file:
-  # Derived fully qualified file names
-  cert: "{{ ssl_cert_file_base_dir }}/{{ ssl_cert_name }}.pem"
-  key: "{{ ssl_cert_file_base_dir }}/{{ ssl_cert_name }}-key.pem"
-  chain: "{{ ssl_cert_file_base_dir }}/{{ ssl_cert_name }}-chain.pem"
 
 # Configuration for k8s-secret storage
-ssl_cert_k8s_secret_name: ssl-cert
 ssl_cert_k8s_secret_namespace: default
-ssl_cert_k8s_secret_filename:
-  cert: tls.crt
-  key: tls.key
-  ca: ca.crt
+
+# Configuration for delegate CA
+ssl_cert_ca_delegate: "{{ groups['ca_nodes'][0] }}"
+ssl_cert_ca_delegate_name: "{{ 'ca' if ssl_cert_type == 'intermediate' else 'intermediate' }}"
+ssl_cert_ca_delegate_base_dir: /etc/pki/ansible-ssl-certs
 
 # Configuration for acme CA
 ssl_cert_acme_account_key: /etc/pki/tls/private/le_account.pem
+ssl_cert_acme_autogenerate_account_key: no
 ssl_cert_acme_staging: yes
 ssl_cert_acme_staging_directory: https://acme-staging.api.letsencrypt.org/directory
 ssl_cert_acme_prod_directory: https://acme-v01.api.letsencrypt.org/directory
-ssl_cert_acme_directory: "{{ ssl_cert_acme_staging_directory if ssl_cert_acme_staging else ssl_cert_acme_prod_directory }}"
 ssl_cert_acme_agreement: https://letsencrypt.org/documents/LE-SA-v1.2-November-15-2017.pdf
-
-# The delegate host holding the CA key to sign the certificate
-ssl_cert_ca_delegate: "{{ groups['ca_nodes'][0] }}"
-
-# The base directory on the delegate host containing signing key, certificate
-ssl_cert_ca_delegate_base_dir: /etc/pki/ansible-ssl-certs
-
-# Location of the signing key and certificate on the delegate host
-ssl_cert_ca_delegate_name: "{{ 'ca' if ssl_cert_type == 'intermediate' else 'intermediate' }}"
-
-# Derived file names on the delegate host
-ssl_cert_ca_delegate_key: "{{ ssl_cert_ca_delegate_name }}-key.pem"
-ssl_cert_ca_delegate_cert: "{{ ssl_cert_ca_delegate_name }}.pem"
-ssl_cert_ca_delegate_chain: "{{ ssl_cert_ca_delegate_name }}-chain.pem"

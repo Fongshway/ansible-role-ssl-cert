@@ -1,4 +1,6 @@
 # These are generally not expected to change, so defined in vars instead of defaults
+
+# CSR JSON template
 ssl_cert_csr_json_data: >
   {
     "CN": "{{ ssl_cert_subject_common_name }}",
@@ -9,11 +11,25 @@ ssl_cert_csr_json_data: >
     },
     "names": [
       {
-        "O": "{{ ssl_cert_subject_organization_name }}"
-        {% if ssl_cert_subject_organizational_unit_name is defined %},"OU": "{{ ssl_cert_subject_organizational_unit_name }}"{% endif %}
-        {% if ssl_cert_subject_country is defined %},"C": "{{ ssl_cert_subject_country }}",{% endif %}
-        {% if ssl_cert_subject_city is defined %},"L": "{{ ssl_cert_subject_city }}"{% endif %}
-        {% if ssl_cert_subject_state is defined %},"ST": "{{ ssl_cert_subject_state }}"{% endif %}
+        {% if ssl_cert_subject_organization_name is defined %}"O": "{{ ssl_cert_subject_organization_name }}",{% endif %}
+        {% if ssl_cert_subject_organizational_unit_name is defined %}"OU": "{{ ssl_cert_subject_organizational_unit_name }}",{% endif %}
+        {% if ssl_cert_subject_country is defined %}"C": "{{ ssl_cert_subject_country }}",{% endif %}
+        {% if ssl_cert_subject_city is defined %}"L": "{{ ssl_cert_subject_city }}",{% endif %}
+        {% if ssl_cert_subject_state is defined %}"ST": "{{ ssl_cert_subject_state }}"{% endif %}
       }
     ]
   }
+
+# Derived fully qualified file names
+ssl_cert_file:
+  cert: "{{ ssl_cert_file_base_dir }}/{{ ssl_cert_name }}.pem"
+  key: "{{ ssl_cert_file_base_dir }}/{{ ssl_cert_name }}-key.pem"
+  chain: "{{ ssl_cert_file_base_dir }}/{{ ssl_cert_name }}-chain.pem"
+
+# Derived file names on the delegate host
+ssl_cert_ca_delegate_key: "{{ ssl_cert_ca_delegate_name }}-key.pem"
+ssl_cert_ca_delegate_cert: "{{ ssl_cert_ca_delegate_name }}.pem"
+ssl_cert_ca_delegate_chain: "{{ ssl_cert_ca_delegate_name }}-chain.pem"
+
+# Derived ACME directory (select staging or production URL)
+ssl_cert_acme_directory: "{{ ssl_cert_acme_staging_directory if ssl_cert_acme_staging else ssl_cert_acme_prod_directory }}"
