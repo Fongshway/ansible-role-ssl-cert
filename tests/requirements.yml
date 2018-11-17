@@ -1,4 +1,4 @@
 - src: jumperfly.cfssl
-  version: v0.1.0
+  version: v0.2.0
 - src: jumperfly.root_ca
-  version: v0.1.0
+  version: v0.1.2
