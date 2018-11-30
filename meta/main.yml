@@ -1,7 +1,8 @@
 galaxy_info:
   role_name: ssl_cert
   author: jumperfly
-  description: ansible-role-intermediate-ca
+  company: jumperfly
+  description: ansible-role-ssl-cert
   license: Apache
   min_ansible_version: "2.0"
   platforms:
