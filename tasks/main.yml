@@ -1,5 +1,5 @@
 - name: Include read tasks
-  include: "{{ ssl_cert_storage }}/read-certs.yml"
+  include_tasks: "{{ ssl_cert_storage }}/read-certs.yml"
 
 - name: Generate key and CSR
   when: not ssl_cert_exists
@@ -18,7 +18,7 @@
       csr_regex: "(?s)(-----BEGIN CERTIFICATE REQUEST.*END CERTIFICATE REQUEST-----)"
 
 - name: Include CA tasks
-  include: ca-{{ ssl_cert_ca_type }}.yml
+  include_tasks: ca-{{ ssl_cert_ca_type }}.yml
 
 - name: Include write tasks
-  include: "{{ ssl_cert_storage }}/write-certs.yml"
+  include_tasks: "{{ ssl_cert_storage }}/write-certs.yml"
