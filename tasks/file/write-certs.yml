@@ -4,6 +4,7 @@
   - name: Save key
     copy:
       dest: "{{ ssl_cert_file.key }}"
+      mode: 0600
       content: "{{ ssl_cert_key_data }}"
   - name: Save certificate
     copy:
